@@ -1,0 +1,6 @@
+Operatie  - comanda
+Adunare   - add
+scadere   - subtract
+inmultire - multiply
+impartire - divide
+putere    - power
