@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel
 from PyQt5.QtGui import QIcon, QPixmap, QPainter, QFont, QFontDatabase, QColor
 from PyQt5.QtCore import Qt
 import sys
+import os
 
 # Assuming the icon path is correct (adjust if needed)
 ICON_PATH = "folder.png"
@@ -53,7 +54,7 @@ class SimpleWindow(QWidget):
 
             # Draw the text
             text = "YONDER OS"
-            painter.drawText(self.rect(), Qt.AlignCenter, text) # type: ignore
+            painter.drawText(self.rect(), Qt.AlignCenter, text)  # type: ignore
         else:
             print("Error: Could not load the font.")
 
@@ -66,24 +67,66 @@ class MenuWindow(QWidget):
         super().__init__()
 
         self.setWindowTitle("Menu")
-        self.setGeometry(100, 100, 400, 300)
+        self.setGeometry(100, 100, 854, 480)
+        self.setStyleSheet("background-color: #2B2B2B;")  # Very dark grey background
 
-        # Load and display the contents of menu.py
-        try:
-            with open("menu.py", "r") as file:
-                contents = file.read()
-        except FileNotFoundError:
-            contents = "Error: menu.py file not found."
+        layout = QVBoxLayout(self)
 
-        self.setFixedSize(400, 300)
+        # Create a scroll area
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        layout.addWidget(scroll_area)
 
-        self.contents_label = QLabel(contents, self)
-        self.contents_label.setGeometry(10, 10, 380, 280)
-        self.contents_label.setWordWrap(True)  # Enable word wrapping if the text is long
+        # Create a widget for the scroll area content
+        scroll_content = QWidget()
+        scroll_area.setWidget(scroll_content)
+
+        # Create a grid layout for the apps
+        grid_layout = QGridLayout(scroll_content)
+        scroll_content.setLayout(grid_layout)
+
+        # Set the font for the app names
+        font_id = QFontDatabase.addApplicationFont(FONT_PATH)
+        if font_id != -1:
+            font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
+            app_font = QFont(font_family, 10)
+        else:
+            print("Error: Could not load the font.")
+            app_font = QFont()
+
+        # Add app icons and names to the grid layout
+        row = 0
+        col = 0
+        for app_name in sorted(os.listdir(APPS_FOLDER_PATH)):
+            if app_name.endswith(".png"):
+                app_base_name = app_name[:-4]  # Remove the .png extension
+
+                # Create a label for the app icon
+                icon_label = QLabel()
+                pixmap = QPixmap(os.path.join(APPS_FOLDER_PATH, app_name)).scaled(50, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                icon_label.setPixmap(pixmap)
+
+                # Create a label for the app name
+                name_label = QLabel(app_base_name)
+                name_label.setFont(app_font)
+                name_label.setStyleSheet("color: white;")
+                name_label.setAlignment(Qt.AlignCenter)
+
+                # Add the icon and name to the grid layout
+                grid_layout.addWidget(icon_label, row, col, Qt.AlignCenter)
+                grid_layout.addWidget(name_label, row + 1, col, Qt.AlignCenter)
+
+                # Update row and column indices for the grid layout
+                col += 1
+                if col == 6:  # 6 columns per row
+                    col = 0
+                    row += 2  # Move to the next set of rows for icons and names
 
 if __name__ == "__main__":
+    import sys
+    from PyQt5.QtWidgets import QApplication
+
     app = QApplication(sys.argv)
-    window = SimpleWindow()
-    window.show()
-    print("It's showtime!")
+    menu_window = MenuWindow()
+    menu_window.show()
     sys.exit(app.exec_())
